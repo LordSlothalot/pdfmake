@@ -1,4 +1,4 @@
-/*! pdfmake v0.2.7, @license MIT, @link http://pdfmake.org */
+/*! pdfmake v0.2.8, @license MIT, @link http://pdfmake.org */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -13029,7 +13029,7 @@ function () {
 
 /***/ }),
 
-/***/ 9946:
+/***/ 1027:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -51694,7 +51694,7 @@ module.exports = __webpack_require__(7187).EventEmitter;
 
 /***/ }),
 
-/***/ 3125:
+/***/ 8568:
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function(a,b){if(true)!(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_FACTORY__ = (b),
@@ -66840,7 +66840,7 @@ module.exports = URLBrowserResolver;
 var isFunction = (__webpack_require__(6225).isFunction);
 var isUndefined = (__webpack_require__(6225).isUndefined);
 var isNull = (__webpack_require__(6225).isNull);
-var FileSaver = __webpack_require__(3125);
+var FileSaver = __webpack_require__(8568);
 var saveAs = FileSaver.saveAs;
 
 var defaultClientFonts = {
@@ -70113,35 +70113,42 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 		return null;
 	}
 
-  const availableHeight = this.writer.context().availableHeight;
-  let availableWidth = this.writer.context().availableWidth;
-
-  let checkQRBoundaries = false;
-  let { width, height } = this.QROpts || {};
-  if (Number.isInteger(width) || Number.isInteger(height)) {
-    if (!Number.isInteger(width)) width = height;
-    else if (!Number.isInteger(height)) height = width;
-    checkQRBoundaries = true
-  }
-  const reduceWidth = width;
-  const reduceHeight = height;
-
-  if (checkQRBoundaries && reduceWidth && reduceHeight) {
-    let widthRemaining = availableWidth;
-    let heightRemaining = availableHeight - reduceHeight;
-    let lineHeight = 0;
-    for (const word of textNode._inlines) {
-      if (word.width <= widthRemaining) {
-        widthRemaining -= word.width;
-        lineHeight = Math.max(lineHeight, word.height)
-      } else {
-        widthRemaining = availableWidth;
-        heightRemaining -= lineHeight
-        if (heightRemaining < 0) {
-          if (reduceWidth) availableWidth -= reduceWidth
-          break;
+  const context = this.writer.context();
+  const availableHeight = context.availableHeight;
+  let availableWidth = context.availableWidth;
+  
+  if (!textNode.noBreak && context.backgroundLength[context.page]) {
+    let checkQRBoundaries = false;
+    let { width, height } = this.QROpts || {};
+    if (Number.isInteger(width) || Number.isInteger(height)) {
+      if (!Number.isInteger(width)) width = height;
+      else if (!Number.isInteger(height)) height = width;
+      checkQRBoundaries = true
+    }
+    const reduceWidth = width;
+    const reduceHeight = height;
+  
+    if (checkQRBoundaries && reduceWidth && reduceHeight) {
+      let widthRemaining = availableWidth;
+      let heightRemaining = availableHeight;
+      let lineHeight = 0;
+      if (heightRemaining > 0) { // if < 0, there's not enough room for a line of text so don't bother.
+        heightRemaining -= reduceHeight;
+        for (const word of textNode._inlines) {
+          if (heightRemaining < word.height) widthRemaining -= reduceWidth;
+          if (word.width <= widthRemaining) {
+            widthRemaining -= word.width;
+            lineHeight = Math.max(lineHeight, word.height)
+          } else {
+            widthRemaining = availableWidth;
+            heightRemaining -= lineHeight
+            if (heightRemaining < 0) {
+              if (reduceWidth) availableWidth -= reduceWidth
+              break;
+            }
+            lineHeight = 0;
+          }
         }
-        lineHeight = 0;
       }
     }
   }
@@ -70518,7 +70525,7 @@ function _interopDefault(ex) {
 	return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex;
 }
 
-var PdfKit = _interopDefault(__webpack_require__(9946));
+var PdfKit = _interopDefault(__webpack_require__(1027));
 
 function getEngineInstance() {
 	return PdfKit;
