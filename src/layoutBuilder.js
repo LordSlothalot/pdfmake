@@ -729,35 +729,42 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 		return null;
 	}
 
-  const availableHeight = this.writer.context().availableHeight;
-  let availableWidth = this.writer.context().availableWidth;
-
-  let checkQRBoundaries = false;
-  let { width, height } = this.QROpts || {};
-  if (Number.isInteger(width) || Number.isInteger(height)) {
-    if (!Number.isInteger(width)) width = height;
-    else if (!Number.isInteger(height)) height = width;
-    checkQRBoundaries = true
-  }
-  const reduceWidth = width;
-  const reduceHeight = height;
-
-  if (checkQRBoundaries && reduceWidth && reduceHeight) {
-    let widthRemaining = availableWidth;
-    let heightRemaining = availableHeight - reduceHeight;
-    let lineHeight = 0;
-    for (const word of textNode._inlines) {
-      if (word.width <= widthRemaining) {
-        widthRemaining -= word.width;
-        lineHeight = Math.max(lineHeight, word.height)
-      } else {
-        widthRemaining = availableWidth;
-        heightRemaining -= lineHeight
-        if (heightRemaining < 0) {
-          if (reduceWidth) availableWidth -= reduceWidth
-          break;
+  const context = this.writer.context();
+  const availableHeight = context.availableHeight;
+  let availableWidth = context.availableWidth;
+  
+  if (!textNode.noBreak && context.backgroundLength[context.page]) {
+    let checkQRBoundaries = false;
+    let { width, height } = this.QROpts || {};
+    if (Number.isInteger(width) || Number.isInteger(height)) {
+      if (!Number.isInteger(width)) width = height;
+      else if (!Number.isInteger(height)) height = width;
+      checkQRBoundaries = true
+    }
+    const reduceWidth = width;
+    const reduceHeight = height;
+  
+    if (checkQRBoundaries && reduceWidth && reduceHeight) {
+      let widthRemaining = availableWidth;
+      let heightRemaining = availableHeight;
+      let lineHeight = 0;
+      if (heightRemaining > 0) { // if < 0, there's not enough room for a line of text so don't bother.
+        heightRemaining -= reduceHeight;
+        for (const word of textNode._inlines) {
+          if (heightRemaining < word.height) widthRemaining -= reduceWidth;
+          if (word.width <= widthRemaining) {
+            widthRemaining -= word.width;
+            lineHeight = Math.max(lineHeight, word.height)
+          } else {
+            widthRemaining = availableWidth;
+            heightRemaining -= lineHeight
+            if (heightRemaining < 0) {
+              if (reduceWidth) availableWidth -= reduceWidth
+              break;
+            }
+            lineHeight = 0;
+          }
         }
-        lineHeight = 0;
       }
     }
   }
